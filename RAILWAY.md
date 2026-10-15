@@ -6,9 +6,11 @@ This repository contains two deployable services. Railway also provides the Post
 
 1. In Railway, create a new project from `YajatMakhija/gehna`.
 2. Add a PostgreSQL database, Redis database, and Storage Bucket to the same project.
-3. Add two GitHub services from this repository: `storefront` and `backend`.
-4. For the storefront service, set **Root Directory** to `/storefront` and **Config File Path** to `/storefront/railway.toml`.
+3. Use the GitHub service Railway already created from the repository as `storefront`. Leave its **Root Directory** empty and its **Config File Path** empty. Railway will automatically use the root `/railway.toml`, which builds and starts the app in `/storefront`.
+4. Add a second GitHub service from the same repository and name it `backend`.
 5. For the backend service, set **Root Directory** to `/backend` and **Config File Path** to `/backend/railway.toml`.
+
+The root configuration is intentional: it lets Railway deploy the public storefront even when a service was created from the repository root. The backend remains a separate service because it has a different process, health check, environment, database, and Redis connection.
 
 ## 2. Backend variables
 

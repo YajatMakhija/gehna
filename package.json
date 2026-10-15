@@ -3,6 +3,7 @@
   "scripts": {
     "dev": "npm --prefix storefront run dev",
     "build": "npm --prefix storefront run build",
+    "start": "npm --prefix storefront run start",
     "backend": "npm --prefix backend run dev",
     "db": "node scripts/database.mjs",
     "test": "npm --prefix backend test",
