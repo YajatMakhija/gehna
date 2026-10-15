@@ -12,6 +12,7 @@
     "test": "node --require ts-node/register/transpile-only --test tests/operations.test.cjs tests/phone.test.cjs tests/email.test.cjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1141.0",
     "@medusajs/admin-sdk": "2.21.1",
     "@medusajs/cli": "2.21.1",
     "@medusajs/framework": "2.21.1",

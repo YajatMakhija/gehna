@@ -41,7 +41,7 @@ ORDER_EMAIL_FROM=Gehna <rajesh@gehnadesigns.in>
 
 Add the private Shiprocket, Resend and Twilio values from `backend/.env.example`. Do not copy the local `DATABASE_URL` into Railway.
 
-Map the Railway bucket's S3-compatible credentials to `S3_BUCKET`, `S3_REGION`, `S3_FILE_URL`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, and `S3_ENDPOINT`. The public file URL must be an HTTPS URL that browsers can reach.
+Map the Railway bucket's S3-compatible credentials to `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, and `S3_ENDPOINT`. Set `S3_URL_STYLE=virtual-host` and set `S3_FILE_URL` to `https://api.gehnadesigns.in/store/files`. The backend serves images from the private bucket through that public read-only route.
 
 ## 3. First backend deployment
 
