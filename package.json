@@ -1,0 +1,12 @@
+{
+  "name": "gehna-store", "private": true,
+  "scripts": {
+    "dev": "npm --prefix storefront run dev",
+    "build": "npm --prefix storefront run build",
+    "backend": "npm --prefix backend run dev",
+    "db": "node scripts/database.mjs",
+    "test": "npm --prefix backend test",
+    "test:dashboard": "node scripts/dashboard-product-smoke.mjs"
+  },
+  "devDependencies": { "embedded-postgres": "18.4.0-beta.17" }
+}

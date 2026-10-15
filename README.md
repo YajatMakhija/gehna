@@ -1,0 +1,36 @@
+# Gehna jewellery store
+
+Single-brand Next.js storefront, Medusa backend/admin, PostgreSQL, Cash on Delivery, Shiprocket booking, and order emails. The local store and the public design preview are separate until a production API and storefront are deployed. Sample catalog, images, prices, stock, ₹80 shipping rate, and policy text must be replaced before accepting customers.
+
+## Local setup
+
+Use Node 20+. Run `npm install` in the root, `backend`, and `storefront`. Copy `backend/.env.example` to `backend/.env` and set local secrets. In separate terminals run `npm run db` and `npm run backend`; then `npm --prefix backend run migrate` and `npm --prefix backend run seed`. Run `npm run dev` for the storefront. The seed creates an India region using Medusa's manual `pp_system_default` provider and writes `storefront/.env.local` with a local publishable key. For an existing India region it sets COD as the only payment provider. It does not overwrite sample product prices or inventory. Restart storefront after seeding. Admin: `http://localhost:9000/app`; storefront: `http://localhost:3000`.
+
+Customers register, verify a mobile number, choose shipping and place a COD order. `PHONE_VERIFY_LOCAL=true` shows a test OTP only in development. Production requires Twilio Verify values and `PHONE_VERIFY_LOCAL=false`. The owner manages products, images, variants, prices, inventory, orders and customers in Medusa Admin. `/app/overview` shows monthly captured/refunded/net amounts, order value, COD due separately, customer/order details, courier status, labels and bulk exports. COD is not collected revenue when an order is merely placed.
+
+## Connect Shiprocket, step by step
+
+Medusa is a custom store, so use Shiprocket's API integration, not its Shopify/WooCommerce channel connector. Keep credentials out of chat and the storefront.
+
+1. Log in to [Shiprocket](https://app.shiprocket.in/). Complete seller/company, invoice/GST and bank/COD-remittance details required by your account. Register the actual pickup address. Note its exact pickup location name and six-digit postcode. Select **Best Recommended** for courier selection, confirm COD coverage, and confirm that the account can book parcels.
+2. Under **Settings → API → Add New API User**, create a dedicated API user using a different email from the dashboard login. Grant Orders, Couriers, Shipments, Labels and buyer-details access as offered by your account. Copy credentials securely. The backend exchanges the API email/password for a bearer token automatically.
+3. In the backend's private `.env` or hosting secrets, set `SHIPROCKET_EMAIL`, `SHIPROCKET_PASSWORD`, `SHIPROCKET_PICKUP_LOCATION`, `SHIPROCKET_PICKUP_PIN`, actual `SHIPMENT_LENGTH_CM`, `SHIPMENT_BREADTH_CM`, `SHIPMENT_HEIGHT_CM` (each above 0.5), and `SHIPMENT_WEIGHT_GRAMS` (or measured variant weights plus `PACKAGING_WEIGHT_GRAMS`). Set actual product HSNs in product metadata `hsn` or `PRODUCT_HSN` where appropriate. Keep `AUTO_SHIP=false` initially.
+4. Restart the backend. Place a controlled COD test order from a verified customer at a serviceable Indian postcode. In `/app/overview`, open the order and click **Book courier**. Check that Shiprocket shows the same Medusa reference, COD amount, recipient, parcel size, Best Recommended courier and AWB. Inspect the official label and perform a real pickup test. The backend uses Shiprocket's returned recommended courier ID rather than maintaining a custom courier list.
+5. After this succeeds, set `AUTO_SHIP=true` and restart. New eligible COD orders are booked after checkout. A recovery job checks missed/retryable orders every five minutes. If an API timeout leaves an uncertain remote booking, use **Sync from Shiprocket** in the dashboard; do not create a duplicate. Set `SHIPROCKET_AUTO_PICKUP=true` only when you are ready to request pickup automatically.
+6. Use the dashboard to view customer/address/items/AWB, view or download labels, select up to 100 orders for bulk customer CSV or native labels PDF, request/verify pickup, and refresh tracking. Monitor charges, COD remittance, cancellations and RTO in Shiprocket. Mark COD captured in Medusa only after cash is actually received/reconciled.
+
+Official reference: [Shiprocket API documentation](https://apidocs.shiprocket.in/) (Authentication, Create Custom Order, Courier Serviceability, Assign AWB, Labels, Pickup and Tracking). COD orders send `payment_method: "COD"` and the serviceability request uses `cod=1`.
+
+## Customer emails
+
+Order placement requests a confirmation email. A confirmed Shiprocket AWB requests a separate courier-booking email; booking does not claim the parcel has been collected. Failed requests are retried up to three times with a stable idempotency key. The dashboard shows each order's email status.
+
+Verify `gehnadesigns.in` as a sender domain in [Resend](https://resend.com/domains), add its DNS records, create an API key, and set `RESEND_API_KEY` and `ORDER_EMAIL_FROM=Gehna <rajesh@gehnadesigns.in>` on the backend only. Restart it and test with an inbox you own. Without these settings no email is sent. [Resend's Send Email API](https://resend.com/docs/api-reference/emails/send-email) documents the sender, recipient, HTML and idempotency key used here.
+
+## Production launch gates
+
+1. Create one Railway project containing the Next.js storefront, Medusa backend, PostgreSQL, Redis, and an object-storage bucket. Connect `gehnadesigns.in` and `www.gehnadesigns.in` to the storefront, and `api.gehnadesigns.in` to Medusa. Configure the HTTPS backend URL, publishable key, region ID, `NEXT_PUBLIC_DEMO_MODE=false`, and the production CORS/origin values. Run migrations and create an owner account.
+2. Replace sample catalog, placeholder image URLs, prices, inventory and shipping rate. Publish real support contact, shipping/returns, privacy and terms. Configure taxes/invoices and validate COD shipping and packaging costs. Confirm product edits/images in the deployed storefront.
+3. Enable real SMS verification, Resend email, Shiprocket and `AUTO_SHIP=true` only after a controlled end-to-end order. Test registration/OTP, stock limits, promotion, COD checkout, admin order, courier selection/fallback, label, pickup, emails, cancellation and COD remittance. Point the domain only after deployed services pass.
+
+Local checks: `npm --prefix backend test`, `npm --prefix backend run typecheck`, `npm --prefix backend run build`, `npm --prefix storefront run typecheck`, and `npm --prefix storefront run build`. With the local database and backend running, `npm run test:dashboard` creates a temporary product through the authenticated admin API, uploads an image, changes price and inventory, verifies the storefront data, deletes the product, and removes the test upload. `node scripts/cod-smoke.mjs` checks OTP, cart, COD checkout and owner dashboard; it creates a local QA order. `node scripts/cleanup-cod-smoke.mjs` cancels matching QA orders. Shipping tests mock Shiprocket and do not alter a real account. See `backend/.env.example` for configuration.

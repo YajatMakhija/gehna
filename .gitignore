@@ -1,0 +1,15 @@
+node_modules/
+.next/
+out/
+.medusa/
+.env
+.env.local
+.env.production
+.local/
+*.log
+.sites-runtime/
+*.tsbuildinfo
+.gstack/
+.impeccable/
+backend/static/
+storefront/.openai/
