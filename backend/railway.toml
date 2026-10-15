@@ -3,7 +3,6 @@ builder = "RAILPACK"
 buildCommand = "npm ci && npm run build"
 
 [deploy]
-preDeployCommand = "npm run migrate"
 startCommand = "npm run start"
 healthcheckPath = "/health"
 healthcheckTimeout = 300

@@ -45,7 +45,7 @@ Map the Railway bucket's S3-compatible credentials to `S3_BUCKET`, `S3_REGION`, 
 
 ## 3. First backend deployment
 
-The backend service runs `npm run migrate` before each deployment, starts the compiled Medusa server through `npm run start`, and checks `/health`. After its first successful deployment:
+The backend service applies pending Medusa database migrations as part of `npm run start`, starts the compiled server, and checks `/health`. After its first successful deployment:
 
 1. Add the custom domain `api.gehnadesigns.in`.
 2. Run `npm run seed` once through a Railway shell to create the India region, fulfillment data and publishable API key.

@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "medusa develop",
     "build": "medusa build",
-    "start": "node scripts/start-production.mjs",
+    "start": "npm run migrate && node scripts/start-production.mjs",
     "migrate": "medusa db:migrate",
     "seed": "medusa exec ./src/scripts/seed.ts",
     "typecheck": "tsc --noEmit",
