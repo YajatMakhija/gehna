@@ -15,6 +15,13 @@ const Overview = () => {
   const [month, setMonth] = useState(currentMonth), [query, setQuery] = useState(''), [status, setStatus] = useState('all'), [offset, setOffset] = useState(0), [tab, setTab] = useState('orders');
   const [selected, setSelected] = useState<string[]>([]), [busy, setBusy] = useState(false), [loading, setLoading] = useState(true), [version, setVersion] = useState(0), [detail, setDetail] = useState<any>(null);
   const [remoteId, setRemoteId] = useState(''); const dialog = useRef<HTMLDialogElement>(null);
+  const [lightTheme, setLightTheme] = useState(false);
+  useEffect(() => { setLightTheme(window.localStorage.getItem('gehna-dashboard-theme') === 'light'); }, []);
+  const toggleTheme = () => setLightTheme(value => {
+    const next = !value;
+    window.localStorage.setItem('gehna-dashboard-theme', next ? 'light' : 'gehna');
+    return next;
+  });
   useEffect(() => { setOffset(0); setSelected([]); }, [month, query, status]);
   useEffect(() => {
     const controller = new AbortController(); setLoading(true); setError('');
@@ -38,7 +45,7 @@ const Overview = () => {
   const toggle = (id: string) => setSelected(ids => ids.includes(id) ? ids.filter(v => v !== id) : ids.length < 100 ? [...ids, id] : ids);
   const ready = data && data.couriers.ready;
   const canBook = (o: any) => ready && !o.shipment.awb && o.status !== 'canceled' && !['awaiting_payment', 'existing_fulfillment', 'booking', 'needs_review'].includes(o.shipment.status);
-  return <div className="gehna-dashboard">
+  return <div className={`gehna-dashboard${lightTheme ? ' gd-light' : ''}`}>
     <style>{`
       .gehna-dashboard{display:grid;gap:24px;max-width:1500px;margin:auto}.gehna-dashboard .gd-header{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;padding-top:22px}.gehna-dashboard .gd-controls,.gehna-dashboard .gd-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.gehna-dashboard .gd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:14px}.gehna-dashboard .gd-stat{padding:20px}.gehna-dashboard .gd-number{font-size:26px;font-weight:600;letter-spacing:-.6px;margin-top:10px;font-variant-numeric:tabular-nums}.gehna-dashboard .gd-caption{font-size:12px;margin-top:8px;opacity:.72}.gehna-dashboard .gd-section-head{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:20px}.gehna-dashboard .gd-scroll{overflow:auto}.gehna-dashboard table{width:100%;border-collapse:collapse;font-size:13px;text-align:left}.gehna-dashboard th{font-weight:500;white-space:nowrap;opacity:.72}.gehna-dashboard td,.gehna-dashboard th{padding:14px 10px;border-bottom:1px solid var(--border-base,#e5e5e5);vertical-align:top}.gehna-dashboard td small{display:block;margin-top:5px;opacity:.72}.gehna-dashboard .gd-link{text-decoration:underline;text-underline-offset:3px}.gehna-dashboard .gd-bars{display:flex;gap:12px;height:140px;align-items:end;overflow-x:auto;padding-top:15px}.gehna-dashboard .gd-bar{flex:1;min-width:34px;display:flex;flex-direction:column;gap:10px;text-align:center;font-size:11px}.gehna-dashboard .gd-bar-fill{background:#535f45;border-radius:3px 3px 0 0;min-height:3px}.gehna-dashboard .gd-tabs{display:flex;gap:8px}.gehna-dashboard .gd-warning{padding:15px;border:1px solid #e9e1df;background:var(--bg-base,#fff);font-size:13px}.gehna-dashboard .gd-couriers{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}.gehna-dashboard dialog{width:min(720px,calc(100vw - 32px));max-height:85vh;overflow:auto;padding:28px;border:1px solid var(--border-base,#ddd);border-radius:10px;background:var(--bg-base,#fff);color:var(--fg-base,#222)}.gehna-dashboard dialog::backdrop{background:#0007}.gehna-dashboard .gd-detail{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px;margin:24px 0}.gehna-dashboard .gd-detail p{margin:7px 0;font-size:13px}.gehna-dashboard .gd-empty{text-align:center;padding:42px 20px}.gehna-dashboard input[type=checkbox]{width:16px;height:16px;accent-color:#535f45}.gehna-dashboard select{padding:7px 10px;border:1px solid var(--border-base,#ddd);border-radius:5px;background:var(--bg-base,#fff);color:inherit}.gehna-dashboard .gd-pager{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:20px}.gehna-dashboard button:focus-visible,.gehna-dashboard a:focus-visible{outline:2px solid #806331;outline-offset:3px}
     `}</style>
@@ -89,7 +96,25 @@ const Overview = () => {
       @media(max-width:760px){.gehna-dashboard{gap:14px;padding:0}.gehna-dashboard>*{min-width:0;max-width:100%}.gehna-dashboard .gd-header{align-items:flex-start;padding:22px 18px}.gehna-dashboard .gd-header h1{font-size:25px!important}.gehna-dashboard .gd-header .gd-controls{width:100%;min-width:0}.gehna-dashboard .gd-grid{width:100%;min-width:0;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px}.gehna-dashboard .gd-grid>*{min-width:0}.gehna-dashboard .gd-stat{padding:15px 13px}.gehna-dashboard .gd-number{font-size:20px}.gehna-dashboard .gd-caption{font-size:11px}.gehna-dashboard .gd-scroll{min-width:0;max-width:100%}.gehna-dashboard .gd-grid + div,.gehna-dashboard .gd-grid + div + div,.gehna-dashboard .gd-grid + div + div + div,.gehna-dashboard .gd-grid + div + div + div + div{padding:16px 13px}.gehna-dashboard .gd-section-head{align-items:flex-start}.gehna-dashboard .gd-tabs{width:100%}.gehna-dashboard .gd-tabs button{flex:1}.gehna-dashboard .gd-section-head>input{max-width:none!important;width:100%}.gehna-dashboard dialog{padding:20px 16px}.gehna-dashboard .gd-bars{height:125px}}
       @media(prefers-reduced-motion:reduce){.gehna-dashboard .gd-stat{transition:none}}
     `}</style>
-    <div className="gd-header"><div><Text style={{ color: '#806331', letterSpacing: 2, fontSize: 11 }}>GEHNA OPERATIONS</Text><Heading level="h1" style={{ fontSize: 28, marginTop: 6 }}>Your business, in view.</Heading><Text style={{ marginTop: 6 }}>Payments, customers and deliveries in one place.</Text></div><div className="gd-controls"><label style={{ fontSize: 12 }}>Reporting month<Input type="month" aria-label="Reporting month" value={month} onChange={e => { if (e.target.value) setMonth(e.target.value); }} /></label><Button variant="secondary" disabled={loading || busy} onClick={() => setVersion(v => v + 1)}>Refresh</Button>{data && <a href={data.storefront_url} target="_blank" rel="noreferrer"><Button variant="secondary">View store</Button></a>}</div></div>
+    <style>{`
+      .gehna-dashboard.gd-light .gd-header{background:#f8f0e4;border-color:#e7d8bf;color:#211a1e;box-shadow:0 8px 28px #5b463111}
+      .gehna-dashboard.gd-light .gd-header h1{color:#211a1e!important}
+      .gehna-dashboard.gd-light .gd-header p:last-child{color:#665e62}
+      .gehna-dashboard.gd-light .gd-header .gd-controls label{color:#4d403b}
+      .gehna-dashboard.gd-light .gd-header .gd-controls input{border-color:#d9c9ad;background:#fffdf9;color:#211a1e}
+      .gehna-dashboard.gd-light .gd-stat:first-child{border-color:#e4d3b6;background:#fff5df;color:#211a1e}
+      .gehna-dashboard.gd-light .gd-stat:first-child p{color:#815d2f}
+      .gehna-dashboard.gd-light .gd-stat:first-child .gd-caption{color:#665e62}
+      .gehna-dashboard.gd-light .gd-grid + div,.gehna-dashboard.gd-light .gd-grid + div + div,.gehna-dashboard.gd-light .gd-grid + div + div + div,.gehna-dashboard.gd-light .gd-grid + div + div + div + div{border-color:#e8dfd1;background:#fff;box-shadow:0 3px 14px #5b46310a}
+      .gehna-dashboard.gd-light .gd-scroll{border-color:#e8dfd1;background:#fffdf9}
+      .gehna-dashboard.gd-light th{background:#f8f1e7;color:#5b4a40}
+      .gehna-dashboard.gd-light tbody tr:hover{background:#fffaf1}
+      .gehna-dashboard.gd-light .gd-tabs{background:#f5eee4}
+      .gehna-dashboard.gd-light .gd-warning{border-color:#ead9bd;background:#fff8eb;color:#563b1d}
+      .gehna-dashboard.gd-light dialog{border-color:#e8dfd1;background:#fffdf9}
+      .gehna-dashboard.gd-light .gd-detail{background:#faf2e7}
+    `}</style>
+    <div className="gd-header"><div><Text style={{ color: '#806331', letterSpacing: 2, fontSize: 11 }}>GEHNA OPERATIONS</Text><Heading level="h1" style={{ fontSize: 28, marginTop: 6 }}>Your business, in view.</Heading><Text style={{ marginTop: 6 }}>Payments, customers and deliveries in one place.</Text></div><div className="gd-controls"><label style={{ fontSize: 12 }}>Reporting month<Input type="month" aria-label="Reporting month" value={month} onChange={e => { if (e.target.value) setMonth(e.target.value); }} /></label><Button variant="secondary" disabled={loading || busy} onClick={() => setVersion(v => v + 1)}>Refresh</Button><Button variant="secondary" aria-pressed={lightTheme} onClick={toggleTheme}>Switch to {lightTheme ? 'Gehna' : 'light'} theme</Button>{data && <a href={data.storefront_url} target="_blank" rel="noreferrer"><Button variant="secondary">View store</Button></a>}</div></div>
     {error && <div role="alert" className="gd-warning" style={{ borderColor: '#af4030' }}>{error}<Button variant="transparent" size="small" onClick={() => setError('')}>Dismiss</Button></div>}
     {notice && <div role="status" className="gd-warning" style={{ borderColor: '#535f45' }}>{notice}</div>}
     {!data && loading && <Container><Text>Loading your store…</Text></Container>}
