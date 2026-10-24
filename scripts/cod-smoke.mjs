@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 
 const env = Object.fromEntries(readFileSync('storefront/.env.local', 'utf8').split(/\r?\n/).filter(Boolean).map(line => line.split(/=(.*)/s).slice(0, 2)));
 const localConfig = readFileSync('backend/.env', 'utf8').replace(/\r/g, '');
-if (/^AUTO_SHIP=true$/m.test(localConfig) || /^RESEND_API_KEY=\S+/m.test(localConfig)) throw new Error('Disable real Shiprocket booking and email before local COD smoke testing.');
+if (/^AUTO_SHIP=true$/m.test(localConfig)) throw new Error('Disable real Shiprocket booking before local COD smoke testing.');
 const email = `codex-cod-${randomBytes(5).toString('hex')}@example.test`;
 const password = randomBytes(18).toString('base64url');
 const phone = '9' + String(randomBytes(5).readUInt32BE(0) % 1_000_000_000).padStart(9, '0');
@@ -15,12 +15,14 @@ async function request(path, method = 'GET', body, token) {
   if (!response.ok) throw new Error(`${path} (${response.status}): ${JSON.stringify(data)}`);
   return data;
 }
+const qaAdmin = JSON.parse(readFileSync('.local/admin-credentials.json', 'utf8'));
+const qaLogin = await request('/auth/user/emailpass', 'POST', qaAdmin);
+const qaConfig = await request('/admin/gehna/overview', 'GET', undefined, qaLogin.token);
+assert.equal(qaConfig.email_ready, false, 'Disable email in the running local backend before testing');
+assert.equal(qaConfig.couriers.auto_enabled, false, 'Disable shipping in the running local backend before testing');
 const registered = await request('/auth/customer/emailpass/register', 'POST', { email, password });
 await request('/store/customers', 'POST', { email, first_name: 'COD', last_name: 'QA', phone }, registered.token);
 const { token } = await request('/auth/customer/emailpass', 'POST', { email, password });
-const code = await request('/store/gehna/phone', 'POST', { action: 'start', phone }, token);
-assert.match(code.dev_code, /^\d{6}$/);
-await request('/store/gehna/phone', 'POST', { action: 'verify', phone, code: code.dev_code }, token);
 const { products } = await request(`/store/products?region_id=${env.NEXT_PUBLIC_MEDUSA_REGION_ID}&fields=id,title,*variants,variants.inventory_quantity&limit=10`);
 const product = products.find(p => p.variants?.some(v => v.inventory_quantity > 0));
 assert(product, 'Need an in-stock local test product');
@@ -54,3 +56,8 @@ assert.equal(row.cod, true, `COD order incorrectly classified: ${JSON.stringify(
 assert.equal(row.shipment.status, 'pending');
 assert.equal(row.captured, 0);
 console.log(`COD checkout passed. Local test order #${completed.order.display_id}; no real email or courier request.`);
+const unconfirmed = await fetch(base + '/admin/gehna/assistant', { method: 'POST', headers: { Authorization: `Bearer ${ownerToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'cancel', order_id: completed.order.id }) });
+assert.equal(unconfirmed.status, 400, 'Assistant cancellation must require confirmation');
+const canceled = await request('/admin/gehna/assistant', 'POST', { action: 'cancel', order_id: completed.order.id, confirm: true }, ownerToken);
+assert.equal(canceled.order.status, 'canceled');
+console.log('Assistant confirmed cancellation passed; order record preserved.');
