@@ -32,12 +32,12 @@ test('assistant cannot publish another staff member draft or cancel a shipped/pa
   await assert.rejects(cancellationPreview(scope, 'all orders'), /exact order/);
 });
 
-test('photo drafting creates a draft, two files and exact INR inventory; failures clean up', async () => {
+test('photo drafting creates three distinct shots and exact INR inventory; failures clean up', async () => {
   const corePath = require.resolve('@medusajs/medusa/core-flows'), original = require(corePath);
   const originalFetch = global.fetch, originalKey = process.env.OPENAI_API_KEY;
-  let productInput, inventoryInput, fail = false, deleted = [], uploaded = [];
+  let productInput, inventoryInput, fail = false, renderFails = false, productCreates = 0, deleted = [], uploaded = [], prompts = [];
   require.cache[corePath].exports = { ...original,
-    createProductsWorkflow: () => ({ run: async ({ input }) => { productInput = input.products[0]; return { result: [{ id: 'prod_test', variants: [{ id: 'variant_test' }] }] }; } }),
+    createProductsWorkflow: () => ({ run: async ({ input }) => { productCreates++; productInput = input.products[0]; return { result: [{ id: 'prod_test', variants: [{ id: 'variant_test' }] }] }; } }),
     createInventoryLevelsWorkflow: () => ({ run: async ({ input }) => { inventoryInput = input; if (fail) throw new Error('Inventory failure'); } })
   };
   delete require.cache[require.resolve('../src/lib/assistant.ts')];
@@ -55,18 +55,30 @@ test('photo drafting creates a draft, two files and exact INR inventory; failure
   process.env.OPENAI_API_KEY = 'test-only';
   global.fetch = async (url, init) => {
     assert.equal(url, 'https://api.openai.com/v1/images/edits');
-    assert.equal(init.body.get('n'), '2'); assert(init.body.get('image') instanceof Blob);
-    return new Response(JSON.stringify({ data: [{ b64_json: png }, { b64_json: png }] }));
+    assert.equal(init.body.get('n'), '1'); assert(init.body.get('image') instanceof Blob);
+    assert.equal(init.body.get('quality'), 'high'); assert.equal(init.body.get('output_format'), 'png');
+    const prompt = init.body.get('prompt'); prompts.push(prompt);
+    if (renderFails && prompt.includes('Editorial close-up 2')) return new Response('{}', { status: 500 });
+    return new Response(JSON.stringify({ data: [{ b64_json: png }] }));
   };
   try {
     const draft = await draftProduct(scope, 'user_owner', { title: 'Hoops', description: 'Small everyday hoops.' }, 'data:image/png;base64,' + png, 1499.50, 7);
-    assert.equal(draft.status, 'draft'); assert.equal(draft.images.length, 2);
+    assert.equal(draft.status, 'draft'); assert.equal(draft.images.length, 3);
+    assert.equal(new Set(prompts).size, 3); assert.match(prompts[0], /no props, packaging or human model/);
+    for (const prompt of prompts.slice(1)) { assert.match(prompt, /adult Indian woman aged 25 or older/); assert.doesNotMatch(prompt, /South Asian/); }
+    assert.match(prompts[1], /front-facing composition/); assert.match(prompts[2], /three-quarter camera angle/);
+    for (const prompt of prompts) assert.match(prompt, /Preserve the exact design/);
     assert.equal(productInput.status, 'draft'); assert.equal(productInput.variants[0].prices[0].amount, 1499.50);
     assert.equal(inventoryInput.inventory_levels[0].stocked_quantity, 7);
     assert.equal(uploaded[0].content, png);
+    assert.equal(productInput.thumbnail, draft.images[0]); assert.equal(productInput.images.length, 3);
     fail = true;
     await assert.rejects(draftProduct(scope, 'user_owner', { title: 'Hoops', description: 'Small hoops.' }, 'data:image/png;base64,' + png, 100, 3), /Inventory failure/);
-    assert.deepEqual(deleted, ['prod_test', 'file_3', 'file_4']);
+    assert.deepEqual(deleted, ['prod_test', 'file_4', 'file_5', 'file_6']);
+    renderFails = true; fail = false;
+    const createdBeforeFailure = productCreates, uploadedBeforeFailure = uploaded.length;
+    await assert.rejects(draftProduct(scope, 'user_owner', { title: 'Hoops', description: 'Small hoops.' }, 'data:image/png;base64,' + png, 100, 3), /HTTP 500/);
+    assert.equal(productCreates, createdBeforeFailure); assert.equal(uploaded.length, uploadedBeforeFailure);
   } finally {
     global.fetch = originalFetch; require.cache[corePath].exports = original;
     if (originalKey === undefined) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = originalKey;
