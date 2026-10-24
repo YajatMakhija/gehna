@@ -3,7 +3,7 @@
 ## Verified locally
 
 - 11 backend test groups passed; both TypeScript checks and production builds passed.
-- 104 commerce requests across 53 endpoint/method combinations passed. Expected error responses below are intentional validation/authentication checks.
+- 105 commerce requests across 54 endpoint/method combinations passed. Expected error responses below are intentional validation/authentication checks.
 - Product create, image upload and byte-exact download, price and stock updates, storefront sync and deletion passed.
 - Signup, login, profile, saved addresses, order history, cart, stock protection, delivery, COD completion without OTP, dashboard reporting and CSV export passed.
 - Assistant authorization, draft publishing, repeat publishing, confirmation requirement and cancellation passed. Canceled records were preserved.
@@ -15,6 +15,7 @@
 
 | Endpoint | Observed HTTP status |
 |---|---|
+| GET /files/%21invalid (no API key) | 400, filename validation reached |
 | DELETE /admin/products/:id | 200 |
 | DELETE /admin/uploads/:key | 200 |
 | DELETE /store/carts/:id/line-items/:id | 200 |
@@ -74,3 +75,7 @@
 Railway account reauthenticated. Frontend uses the public API domain, with database, Redis, bucket and Shiprocket variables present. Resend and OpenAI keys were copied privately into the backend environment; secrets are excluded from this report and Git. OTP is not required by the new checkout.
 
 Deployment status and authenticated production CRUD/checkout must be checked after merge. Production had zero catalog products in the pre-deploy read-only check. A real catalog, final shipping charge, policies/tax review, and one controlled Shiprocket booking with AWB/label/pickup verification are still required before customer launch. AUTO_SHIP and automatic pickup remain false until that check succeeds.
+
+Production testing found an incorrect storage secret and image URLs under Medusa's Store API guard. The correct bucket secret passed a write/read/delete test and was synced privately. The image-route fix exposes the same validated, read-only handler at `/files` and changes generated URLs to that public prefix; the legacy `/store/files` route remains available for API clients. Re-run deployed image download and checkout checks after this fix rolls out.
+
+The backend runtime dependency audit reports 25 high and 57 moderate advisories, with no critical findings. These need compatibility/security review before customer launch. Railway also reports that its current TOML configuration support ends on 1 December 2026; migrate before that date.
