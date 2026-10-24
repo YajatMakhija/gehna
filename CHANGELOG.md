@@ -2,6 +2,15 @@
 
 All notable changes to Gehna are documented in this file.
 
+## [0.1.0.1] - 2026-10-24
+
+- Added a light dashboard assistant that creates product drafts with OpenAI image edits, a short description, explicit INR pricing and stock, and a review step before publishing.
+- Added confirmed cancellation for unshipped, uncaptured orders while preserving order records.
+- Removed mandatory SMS verification from customer signup and COD checkout.
+- Improved branded order and courier-booking emails with the Gehna logo and plain-text content.
+- Added repeatable local commerce API checks, assistant validation and rollback tests, and image download verification.
+- Return a missing-payment-collection error instead of a server error during payment-session creation.
+
 ## [0.1.0.0] - 2026-10-15
 
 ### Added

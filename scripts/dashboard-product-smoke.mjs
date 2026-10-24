@@ -79,6 +79,9 @@ try {
   const uploadedFile = uploaded.data.files?.[0]
   assert(uploadedFile?.url, "Admin image upload did not return a URL")
   uploadId = uploadedFile.id
+  const downloaded = await fetch(uploadedFile.url)
+  assert.equal(downloaded.status, 200, "Uploaded product image is not publicly readable")
+  assert.deepEqual(Buffer.from(await downloaded.arrayBuffer()), readFileSync("storefront/public/images/necklace.png"), "Uploaded image bytes changed")
 
   const details = await request(`/admin/products/${productId}?fields=*variants,*variants.prices`, { token })
   const variant = details.data.product.variants[0]

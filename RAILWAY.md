@@ -39,7 +39,9 @@ SHIPROCKET_AUTO_PICKUP=false
 ORDER_EMAIL_FROM=Gehna <rajesh@gehnadesigns.in>
 ```
 
-Add the private Shiprocket, Resend and Twilio values from `backend/.env.example`. Do not copy the local `DATABASE_URL` into Railway.
+Add the private Shiprocket and Resend values from `backend/.env.example`. SMS verification is disabled in the customer flow; Twilio credentials are optional and are not needed for checkout. Do not copy the local `DATABASE_URL` into Railway.
+
+For the staff assistant, set `OPENAI_API_KEY` on the backend only. The defaults are `OPENAI_TEXT_MODEL=gpt-5.6-terra` and `OPENAI_IMAGE_MODEL=gpt-image-2.5-sunburst`; the OpenAI project needs billing and access to these models. Never set the key in a `NEXT_PUBLIC_*` variable. Redeploy the backend after setting it. Open `/app/assistant`, upload a raw photo, specify price and stock, and request a draft. Review both generated photos and the description, then confirm publishing. Image edits can change jewellery details, so compare them with the actual product. The assistant can cancel an unshipped, uncaptured order after confirmation; shipped/paid orders require manual courier/refund handling. It preserves order records.
 
 Map the Railway bucket's S3-compatible credentials to `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, and `S3_ENDPOINT`. Set `S3_URL_STYLE=virtual-host` and set `S3_FILE_URL` to `https://api.gehnadesigns.in/store/files`. The backend serves images from the private bucket through that public read-only route.
 
@@ -75,10 +77,10 @@ Add the DNS records Railway displays for the three custom domains. Verify `gehna
 ## 6. Controlled launch check
 
 1. Add one real product with its final price, stock, weight, dimensions, HSN and photos.
-2. Register with a real mobile number and complete Twilio OTP verification.
+2. Register with an email, password and real mobile number. No OTP is requested.
 3. Place one COD order to a serviceable postcode.
 4. Keep `AUTO_SHIP=false`; use **Book courier** from `/app/overview` and verify the order, AWB, customer address and label in Shiprocket.
 5. Verify both customer emails arrive and product inventory decreases.
 6. Enable `AUTO_SHIP=true` only after the controlled order succeeds. Enable `SHIPROCKET_AUTO_PICKUP=true` only when parcels should request pickup immediately.
 
-The code is deployable before this controlled check. The store should not accept real customers until the actual catalog, policies, taxes, shipping amount, email, OTP and courier flow have been verified.
+The code is deployable before this controlled check. The store should not accept real customers until the actual catalog, policies, taxes, shipping amount, email and courier flow have been verified. Without OTP, mobile numbers are supplied by customers but are not verified; check suspicious COD orders before dispatch.
