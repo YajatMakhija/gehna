@@ -37,7 +37,7 @@ const token = login.token
 const sku = `GEH-QA-${Date.now()}`
 const handle = `dashboard-qa-${Date.now()}`
 let productId
-let uploadId
+const uploadIds = []
 
 try {
   const [{ data: profiles }, { data: channels }, { data: locations }] = await Promise.all([
@@ -75,10 +75,12 @@ try {
 
   const image = new FormData()
   image.append("files", new Blob([readFileSync("storefront/public/images/necklace.png")], { type: "image/png" }), "dashboard-qa.png")
+  image.append("files", new Blob([readFileSync("storefront/public/images/jhumkas.png")], { type: "image/png" }), "dashboard-qa-second.png")
   const uploaded = await request("/admin/uploads", { method: "POST", token, body: image })
   const uploadedFile = uploaded.data.files?.[0]
   assert(uploadedFile?.url, "Admin image upload did not return a URL")
-  uploadId = uploadedFile.id
+  uploadIds.push(...uploaded.data.files.map(file => file.id))
+  assert.equal(uploadIds.length, 2, "Both gallery images must upload")
   const downloaded = await fetch(uploadedFile.url)
   assert.equal(downloaded.status, 200, "Uploaded product image is not publicly readable")
   assert.deepEqual(Buffer.from(await downloaded.arrayBuffer()), readFileSync("storefront/public/images/necklace.png"), "Uploaded image bytes changed")
@@ -91,7 +93,13 @@ try {
   await request(`/admin/products/${productId}`, {
     method: "POST",
     token,
-    body: { title: "Dashboard QA Product Updated", thumbnail: uploadedFile.url, images: [{ url: uploadedFile.url }] },
+    body: { title: "Dashboard QA Product Updated", thumbnail: uploadedFile.url, images: uploaded.data.files.map(file => ({ url: file.url })) },
+  })
+  const gallery = await request(`/admin/products/${productId}?fields=*images`, { token })
+  const reordered = [...gallery.data.product.images].reverse()
+  await request(`/admin/products/${productId}`, {
+    method: "POST", token,
+    body: { thumbnail: reordered[0].url, images: reordered.map(({ id, url }) => ({ id, url })) },
   })
   await request(`/admin/products/${productId}/variants/${variant.id}`, {
     method: "POST",
@@ -118,19 +126,18 @@ try {
     { publishable: true }
   )
   assert.equal(storeProduct.data.product.title, "Dashboard QA Product Updated")
-  assert.equal(storeProduct.data.product.thumbnail, uploadedFile.url)
+  assert.equal(storeProduct.data.product.thumbnail, reordered[0].url)
+  assert.deepEqual(storeProduct.data.product.images.map(image => image.url), reordered.map(image => image.url), "Storefront must receive the saved gallery order")
   assert.equal(storeProduct.data.product.variants[0].calculated_price.calculated_amount, 1599)
   assert.equal(storeProduct.data.product.variants[0].inventory_quantity, 9)
 
   await request(`/admin/products/${productId}`, { method: "DELETE", token })
   await request(`/admin/products/${productId}`, { token, expected: 404 })
   productId = undefined
-  console.log("Dashboard product create, image upload, price update, inventory update, storefront sync and delete passed.")
+  console.log("Dashboard product create, image upload, gallery reorder, cover change, price update, inventory update, storefront sync and delete passed.")
 } finally {
   if (productId) {
     await request(`/admin/products/${productId}`, { method: "DELETE", token }).catch(() => undefined)
   }
-  if (uploadId) {
-    await request(`/admin/uploads/${uploadId}`, { method: "DELETE", token }).catch(() => undefined)
-  }
+  for (const uploadId of uploadIds) await request(`/admin/uploads/${uploadId}`, { method: "DELETE", token }).catch(() => undefined)
 }
