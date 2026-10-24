@@ -29,7 +29,7 @@ export async function POST(req: AuthenticatedMedusaRequest, res: MedusaResponse)
       const price = body.price ?? plan.price, stock = body.stock ?? plan.stock;
       if (!body.image || price === null || price === undefined || stock === null || stock === undefined) return res.json({ intent: 'help', message: 'Upload the raw product photo and supply the selling price in INR and stock quantity, then send your request again.' });
       const product = await draftProduct(req.scope, actor, plan, body.image, price, stock);
-      return res.json({ intent: plan.intent, product, message: 'I created a product draft with two studio photos and a one-line description. Check the jewellery details, price and stock, then publish.' });
+      return res.json({ intent: plan.intent, product, message: 'I created a product draft with one studio product photo, two model-worn editorial close-ups and a one-line description. Check all three photos, jewellery details, price and stock, then publish.' });
     }
     res.json({ intent: 'help', message: 'Ask me to add jewellery from a photo with its price and stock, or to cancel an unshipped COD order by its order number.' });
   } catch (error: any) {

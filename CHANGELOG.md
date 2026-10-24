@@ -2,6 +2,12 @@
 
 All notable changes to Gehna are documented in this file.
 
+## [0.1.0.3] - 2026-10-24
+
+- Generate one studio product image and two distinct model-worn editorial close-ups featuring an adult Indian woman, each with its own high-quality image-edit request.
+- Label all three dashboard previews and retain the product-only image as the thumbnail. Publish only after staff review.
+- Verify three-shot ordering and ensure image-generation failures leave no partial product or uploaded files.
+
 ## [0.1.0.2] - 2026-10-24
 
 - Serve product images through a public read-only route outside Medusa Store API authentication so browser image tags can display uploaded photos.
