@@ -2,6 +2,10 @@
 
 All notable changes to Gehna are documented in this file.
 
+## [0.1.1.1] - 2026-10-25
+
+- Keep product details and recommendations separated on mobile by using a fixed row gap instead of a percentage gap.
+
 ## [0.1.1.0] - 2026-10-25
 
 - Manage recent products from a light Catalog studio with direct photo, price, inventory and category controls.
