@@ -2,6 +2,10 @@
 
 All notable changes to Gehna are documented in this file.
 
+## [0.1.0.2] - 2026-10-24
+
+- Serve product images through a public read-only route outside Medusa Store API authentication so browser image tags can display uploaded photos.
+
 ## [0.1.0.1] - 2026-10-24
 
 - Added a light dashboard assistant that creates product drafts with OpenAI image edits, a short description, explicit INR pricing and stock, and a review step before publishing.

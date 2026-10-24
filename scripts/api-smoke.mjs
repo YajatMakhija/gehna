@@ -71,6 +71,9 @@ try {
   assert.equal(empty.cart.items.length, 0);
   const badFile = await fetch('http://localhost:9000/store/files/%21invalid', { headers: { 'x-publishable-api-key': stockEnv.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY } });
   assert.equal(badFile.status, 400);
+  const publicFile = await fetch('http://localhost:9000/files/%21invalid');
+  assert.equal(publicFile.status, 400);
+  assert.equal((await publicFile.json()).message, 'Invalid file key', 'Public image route must reach filename validation without a Store API key');
   console.log('All commerce API smoke suites passed. Expected 400/401/403/404 responses verified.');
 } finally {
   try { await import('./cleanup-cod-smoke.mjs'); } finally {
