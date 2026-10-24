@@ -1,9 +1,11 @@
-# Gehna deployment QA — 24 October 2026
+# Gehna deployment QA — 25 October 2026
 
 ## Verified locally
 
-- 11 backend test groups passed; both TypeScript checks and production builds passed.
-- 105 commerce requests across 54 endpoint/method combinations passed. Expected error responses below are intentional validation/authentication checks.
+- Catalog studio and the light dashboard were checked at mobile, tablet and desktop widths. The image shortcut opens Medusa’s media editor.
+- Multi-image upload, saved gallery reordering and cover-photo changes passed through the admin and Store APIs. Product-gallery thumbnail switching and the Earrings collection passed browser checks. Temporary products and uploads were removed.
+- 13 backend/catalog test groups passed; both TypeScript checks and production builds passed.
+- 108 commerce requests across 54 endpoint/method combinations passed. Expected error responses below are intentional validation/authentication checks.
 - Product create, image upload and byte-exact download, price and stock updates, storefront sync and deletion passed.
 - Signup, login, profile, saved addresses, order history, cart, stock protection, delivery, COD completion without OTP, dashboard reporting and CSV export passed.
 - Assistant authorization, draft publishing, repeat publishing, confirmation requirement and cancellation passed. Canceled records were preserved.

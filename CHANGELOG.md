@@ -2,6 +2,13 @@
 
 All notable changes to Gehna are documented in this file.
 
+## [0.1.1.0] - 2026-10-25
+
+- Manage recent products from a light Catalog studio with direct photo, price, inventory and category controls.
+- Browse all product photos with a gallery that follows the saved cover and image order.
+- Fix missing Earrings results and assign categories to AI drafts, including whole-word jewellery matching and concurrent category creation recovery.
+- Verify saved image order, cover changes, category selection and existing commerce flows with regression tests.
+
 ## [0.1.0.3] - 2026-10-24
 
 - Generate one studio product image and two distinct model-worn editorial close-ups featuring an adult Indian woman, each with its own high-quality image-edit request.
