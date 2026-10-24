@@ -129,7 +129,7 @@ footer { background: #211a1e; color: #fffaf8; }
 .shop-grid { gap: 40px 24px; }
 .shop-page { padding-bottom: 100px; }
 .breadcrumbs { color: var(--muted); font-size: 12px; }
-.product-detail { gap: 7%; }
+.product-detail { column-gap: 7%; row-gap: 30px; }
 .product-gallery { min-width: 0; }
 .detail-image { overflow: hidden; border-radius: 18px; background: var(--blush-light); }
 .detail-image img { width: 100%; aspect-ratio: .86; }
