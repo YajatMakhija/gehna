@@ -43,7 +43,7 @@ test('booking, duplicate events, timeout hold, reconciliation and bulk labels (n
     if(path.includes('auth/login')) data={token:'fixture-token'};
     else if(path.includes('courier/serviceability')) data={data:{shiprocket_recommended_courier_id:2,recommended_by:{title:'Best in price'},available_courier_companies:[{courier_company_id:2,courier_name:'Blue Dart Surface',rate:80,blocked:0}]}};
     else if(path.includes('orders/create/adhoc')) { creates++; data={order_id:123,shipment_id:456}; }
-    else if(path.includes('courier/assign/awb')) { assigns++; if(timeout)throw new Error('network timeout'); remoteAwb='1234567890'; data={awb_assign_status:1,response:{data:{awb_code:remoteAwb,shipment_id:456,courier_company_id:2,courier_name:'Blue Dart Surface'}}}; }
+    else if(path.includes('courier/assign/awb')) { assigns++; if(timeout)throw new Error('network timeout'); if(mode==='wallet')data={status_code:350,message:'Please recharge your ShipRocket wallet. The minimum required balance is Rs 100',awb_assign_status:0,response:{data:{awb_assign_error:'Please recharge your ShipRocket wallet. The minimum required balance is Rs 100'}}}; else { remoteAwb='1234567890'; data={awb_assign_status:1,response:{data:{awb_code:remoteAwb,shipment_id:456,courier_company_id:2,courier_name:'Blue Dart Surface'}}}; } }
     else if(path.includes('orders/show/')) data={data:{id:123,channel_order_id:order.id,shipments:{id:456,awb:remoteAwb,courier_id:2,courier:'Blue Dart Surface',status:'NEW'}}};
     else if(path.includes('courier/generate/pickup')) { pickups++; data={pickup_status:1,response:{pickup_scheduled_date:'2026-10-02',pickup_token_number:'QA_TOKEN'}}; }
     else if(path.includes('manifests/generate')) data={manifest_url:'https://kr-shipmultichannel.s3.ap-southeast-1.amazonaws.com/1/labels/test.pdf'};
@@ -68,5 +68,8 @@ test('booking, duplicate events, timeout hold, reconciliation and bulk labels (n
     await bookOrder(scope,order.id,true); assert.equal(assigns,count); assert.equal(creates,3);
     remoteAwb='1234567890'; const synced=await reconcileOrder(scope,order.id); assert.equal(synced.status,'booked'); assert.equal(assigns,count); assert.equal(creates,3);
     order=fixture(); order.payment_collections[0].captured_amount=0; await bookOrder(scope,order.id,true); assert.equal(creates,3);
+    order=fixture(); timeout=false; mode='wallet'; remoteAwb=null;
+    const rejected=await bookOrder(scope,order.id,true); assert.equal(rejected.status,'needs_review'); assert.match(rejected.error,/recharge.*wallet.*Rs 100/); assert(!rejected.awb); assert.equal(creates,4);
+    const rejectedAssigns=assigns; await bookOrder(scope,order.id,true); assert.equal(creates,4); assert.equal(assigns,rejectedAssigns);
   } finally { global.fetch=before; require.cache[corePath].exports=original; }
 });
