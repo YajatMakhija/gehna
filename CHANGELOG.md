@@ -2,6 +2,13 @@
 
 All notable changes to Gehna are documented in this file.
 
+## [0.1.3.0] - 2026-10-26
+
+- Add customer return requests for delivered items, with quantity selection, reasons and status in My orders.
+- Add a staff return queue linked to Medusa’s review and receipt workflow; requests do not issue refunds, book pickups or restock items.
+- Protect order ownership, prevent duplicate/over-quantity requests and block the native customer endpoint from bypassing staff review.
+- Refine the light customer dashboard with clearer order cards and an accessible return form.
+
 ## [0.1.2.0] - 2026-10-26
 
 - Refresh catalog changes when navigating, returning to the storefront, reconnecting, and every 30 seconds while the tab is visible.

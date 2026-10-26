@@ -1,4 +1,4 @@
-# Gehna deployment QA — 25 October 2026
+# Gehna deployment QA — updated 26 October 2026
 
 ## Verified locally
 
@@ -71,6 +71,12 @@
 | POST /store/customers/me/addresses | 200 |
 | POST /store/payment-collections | 200 |
 | POST /store/payment-collections/:id/payment-sessions | 200 |
+
+## Customer return requests — verified locally, production verification pending
+
+The customer account now offers delivered-item return requests with quantities, a reason and status history. The custom authenticated `/store/gehna/returns` endpoint enforces ownership and quantity checks, while direct `POST /store/returns` is blocked. The dashboard queue opens the native order return draft for staff review. Requests do not trigger pickup, refunds or restocking; staff must confirm the receiving location, arrange collection manually, receive the actual goods, then decide any refund. The merchant’s published return policy remains a launch gate; no return window is defined by this feature.
+
+`node scripts/returns-smoke.mjs` checks the local request-to-staff-receipt flow, ownership, delivered quantities, duplicates, native endpoint protection and restock timing. It requires email and automatic courier booking to be disabled and makes no email, courier or refund call. Temporary products are removed; local audit records remain. Local request-to-receipt integration passed, including exact restock and protected endpoints. The actual customer form passed zero-quantity validation, successful submission and awaiting-review status on mobile; 390px and 1280px screenshots were reviewed with no horizontal overflow. All 16 backend groups, both type checks and both production builds passed. Production verification follows deployment.
 
 ## Production state and remaining launch checks
 

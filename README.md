@@ -33,6 +33,12 @@ Order placement requests a confirmation email. A confirmed Shiprocket AWB reques
 
 Verify `gehnadesigns.in` as a sender domain in [Resend](https://resend.com/domains), add its DNS records, create an API key, and set `RESEND_API_KEY` and `ORDER_EMAIL_FROM=Gehna <rajesh@gehnadesigns.in>` on the backend only. Restart it and test with an inbox you own. Without these settings no email is sent. [Resend's Send Email API](https://resend.com/docs/api-reference/emails/send-email) documents the sender, recipient, HTML and idempotency key used here.
 
+## Customer return requests
+
+Customers sign in at `/account`, open **My orders**, and choose **Request a return** on an order with delivered items. They select quantities, enter a reason and submit, then see the request status on that order. The authenticated `/store/gehna/returns` endpoint checks order ownership, delivered quantities and existing returns; direct `POST /store/returns` requests are blocked.
+
+Staff see **Customer return requests** in `/app/overview` and open the order’s native Medusa return draft. Review the request, confirm the receiving stock location and return, arrange collection manually, and record receipt only when the actual goods arrive. Then decide and process any refund separately. A customer request does not automatically arrange pickup, refund payment or restock goods. The merchant’s final return eligibility, window and refund policy must be published before launch; the request form does not establish a return window.
+
 ## Production launch gates
 
 1. Create one Railway project containing the Next.js storefront, Medusa backend, PostgreSQL, Redis, and an object-storage bucket. Connect `gehnadesigns.in` and `www.gehnadesigns.in` to the storefront, and `api.gehnadesigns.in` to Medusa. Configure the HTTPS backend URL, publishable key, region ID, `NEXT_PUBLIC_DEMO_MODE=false`, and the production CORS/origin values. Run migrations and create an owner account.
@@ -40,3 +46,5 @@ Verify `gehnadesigns.in` as a sender domain in [Resend](https://resend.com/domai
 3. Configure Resend email and Shiprocket, keeping `AUTO_SHIP=false` until a controlled end-to-end order succeeds. Test registration without OTP, stock limits, promotion, COD checkout, admin order, courier selection/fallback, label, pickup, emails, cancellation and COD remittance. Enable automatic shipping only after that check; accept real customers only after deployed services pass. Check suspicious COD orders before dispatch because mobile numbers are unverified.
 
 Local checks: `npm --prefix backend test`, `npm --prefix backend run typecheck`, `npm --prefix backend run build`, `npm --prefix storefront run typecheck`, and `npm --prefix storefront run build`. With the local database and backend running, `npm run test:dashboard` creates a temporary product through the authenticated admin API, uploads an image, changes price and inventory, verifies the storefront data, deletes the product, and removes the test upload. `node scripts/cod-smoke.mjs` checks cart, COD checkout without OTP, the owner dashboard and confirmed assistant cancellation; it creates and cancels a local QA order. `node scripts/cleanup-cod-smoke.mjs` cancels matching QA orders. Shipping tests mock Shiprocket and do not alter a real account. See `backend/.env.example` for configuration.
+
+`node scripts/returns-smoke.mjs` is local-only and requires email and automatic courier booking to be disabled. It creates a temporary product and delivered test order, checks return ownership, quantity and duplicate protection, then confirms and receives the return as staff to verify restocking. It makes no email, courier or refund call. The temporary product is deleted; local customer/order/return audit records remain.
