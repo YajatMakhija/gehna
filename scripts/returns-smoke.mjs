@@ -1,0 +1,59 @@
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {randomBytes} from 'node:crypto';
+const base='http://localhost:9000';
+const env=Object.fromEntries(readFileSync('storefront/.env.local','utf8').split(/\r?\n/).filter(l=>l.includes('=')).map(l=>{const i=l.indexOf('=');return[l.slice(0,i),l.slice(i+1)];}));
+async function api(path,{body,token,method=body?'POST':'GET',status=200}={}){const r=await fetch(base+path,{method,headers:{'Content-Type':'application/json','x-publishable-api-key':env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY,...(token?{Authorization:'Bearer '+token}:{})},...(body?{body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(30000)});const d=await r.json();assert.equal(r.status,status,`${method} ${path}: ${JSON.stringify(d)}`);return d;}
+const admin=(await api('/auth/user/emailpass',{body:JSON.parse(readFileSync('.local/admin-credentials.json','utf8'))})).token;
+const config=await api('/admin/gehna/overview',{token:admin});assert.equal(config.email_ready,false);assert.equal(config.couriers.auto_enabled,false);
+const email='returns-qa-'+Date.now()+'@example.test',password=randomBytes(24).toString('hex');
+const registered=await api('/auth/customer/emailpass/register',{body:{email,password}});
+await api('/store/customers',{token:registered.token,body:{email,first_name:'Return',last_name:'QA',phone:'9111111111'}});
+const token=(await api('/auth/customer/emailpass',{body:{email,password}})).token;
+const {stores}=await api('/admin/stores',{token:admin}),{shipping_profiles}=await api('/admin/shipping-profiles',{token:admin}),{stock_locations}=await api('/admin/stock-locations',{token:admin});
+const location=stock_locations.find(l=>l.name==='Gehna Studio').id,sku='GEH-RETURN-'+Date.now();let productId,returnId,orderId,failed=false;
+try{
+ const {product}=await api('/admin/products',{token:admin,body:{title:'Temporary local return QA',handle:'return-qa-'+Date.now(),status:'published',shipping_profile_id:shipping_profiles.find(p=>p.type==='default').id,sales_channels:[{id:stores[0].default_sales_channel_id}],options:[{title:'Size',values:['One size']}],variants:[{title:'One size',sku,manage_inventory:true,options:{Size:'One size'},prices:[{currency_code:'inr',amount:799}]}]}});productId=product.id;
+ const inventory=(await api('/admin/inventory-items?sku='+sku,{token:admin})).inventory_items[0].id;
+ await api(`/admin/inventory-items/${inventory}/location-levels`,{token:admin,body:{location_id:location,stocked_quantity:3}});
+ const {cart}=await api('/store/carts',{token,body:{region_id:env.NEXT_PUBLIC_MEDUSA_REGION_ID}});
+ await api(`/store/carts/${cart.id}/customer`,{token,body:{}});await api(`/store/carts/${cart.id}/line-items`,{token,body:{variant_id:product.variants[0].id,quantity:1}});
+ const address={first_name:'Return',last_name:'QA',address_1:'Local return QA only - do not dispatch',city:'Delhi',province:'Delhi',postal_code:'110001',country_code:'in',phone:'9111111111'};
+ await api(`/store/carts/${cart.id}`,{token,body:{email,shipping_address:address,billing_address:address}});
+ const {shipping_options}=await api('/store/shipping-options?cart_id='+cart.id,{token});await api(`/store/carts/${cart.id}/shipping-methods`,{token,body:{option_id:shipping_options[0].id}});
+ const {payment_collection}=await api('/store/payment-collections',{token,body:{cart_id:cart.id}});await api(`/store/payment-collections/${payment_collection.id}/payment-sessions`,{token,body:{provider_id:'pp_system_default'}});
+ const completed=await api(`/store/carts/${cart.id}/complete`,{token,body:{}});assert.equal(completed.type,'order');orderId=completed.order.id;const itemId=completed.order.items[0].id;
+ writeFileSync('.local/returns-qa-customer.json',JSON.stringify({email,password,orderId}));
+ const request={order_id:orderId,reason:'Clasp is damaged on arrival.',items:[{id:itemId,quantity:1}],receive_now:true};
+ const nativeRequest={order_id:orderId,items:request.items,return_shipping:{option_id:'so_qa'},receive_now:true};
+ await api('/store/gehna/returns?order_id='+orderId,{status:401});await api('/store/returns',{body:nativeRequest,status:401});
+ await api('/store/gehna/returns',{token,body:request,status:400});
+ await api(`/admin/orders/${orderId}/fulfillments`,{token:admin,body:{items:[{id:itemId,quantity:1}],location_id:location,no_notification:true}});
+ let order=(await api('/admin/orders/'+orderId+'?fields=*fulfillments,*items',{token:admin})).order;const fulfillment=order.fulfillments.find(f=>!f.canceled_at).id;
+ await api(`/admin/orders/${orderId}/fulfillments/${fulfillment}/shipments`,{token:admin,body:{items:[{id:itemId,quantity:1}],labels:[],no_notification:true}});
+ await api(`/admin/orders/${orderId}/fulfillments/${fulfillment}/mark-as-delivered`,{token:admin,body:{no_notification:true}});
+ const available=await api('/store/gehna/returns?order_id='+orderId,{token});assert.equal(available.eligible_items[0].quantity,1);
+ await api('/store/gehna/returns',{token,body:{...request,items:[{id:itemId,quantity:2}]},status:400});
+ await api('/store/returns',{token,body:nativeRequest,status:403});
+ const stock=async()=> (await api(`/store/products/${productId}?region_id=${env.NEXT_PUBLIC_MEDUSA_REGION_ID}&fields=*variants,variants.inventory_quantity`)).product.variants[0].inventory_quantity;
+ assert.equal(await stock(),2);
+ const result=await api('/store/gehna/returns',{token,body:request,status:201});returnId=result.return.id;assert.equal(result.return.status,'awaiting_review');assert.equal(await stock(),2,'A request must not restock inventory');
+ await api('/store/gehna/returns',{token,body:request,status:400});
+ assert((await api('/admin/gehna/returns',{token:admin})).returns.some(r=>r.id===returnId));
+ assert.equal((await api('/store/gehna/returns?order_id='+orderId,{token})).returns[0].status,'awaiting_review');
+ const outsiderEmail='outsider-'+Date.now()+'@example.test';const outsiderAuth=await api('/auth/customer/emailpass/register',{body:{email:outsiderEmail,password}});await api('/store/customers',{token:outsiderAuth.token,body:{email:outsiderEmail}});const outsider=(await api('/auth/customer/emailpass',{body:{email:outsiderEmail,password}})).token;
+ await api('/store/gehna/returns?order_id='+orderId,{token:outsider,status:404});await api('/store/gehna/returns',{token:outsider,body:request,status:404});
+ await api('/admin/returns/'+returnId,{token:admin,body:{location_id:location}});
+ await api('/admin/returns/'+returnId+'/request',{token:admin,body:{}});
+ await api('/admin/returns/'+returnId+'/receive',{token:admin,body:{}});
+ await api('/admin/returns/'+returnId+'/receive-items',{token:admin,body:{items:[{id:itemId,quantity:1}]}});
+ await api('/admin/returns/'+returnId+'/receive/confirm',{token:admin,body:{}});
+ assert.equal(await stock(),3,'Staff receipt must restock the item');
+ const final=await api('/store/gehna/returns?order_id='+orderId,{token});assert.equal(final.returns[0].status,'received');assert.equal(final.eligible_items.length,0);
+ writeFileSync('.local/returns-qa-customer.json',JSON.stringify({email,password,orderId,returnId}));
+ console.log('PASS: delivered-item request, customer ownership, quantities, duplicates, protected native endpoint, staff queue, confirmation/receipt and exact restock. No refund, email or courier call.');
+}catch(error){failed=true;console.error('Return-flow check failed:',error.message);throw error;}finally{
+ if(orderId){const o=(await api('/admin/orders/'+orderId+'?fields=*fulfillments',{token:admin})).order;if(!o.fulfillments.length)await api('/admin/orders/'+orderId+'/cancel',{token:admin,body:{}});}
+ if(productId)await api('/admin/products/'+productId,{token:admin,method:'DELETE'}).catch(e=>{if(!failed)throw e;console.error('QA product cleanup:',e.message);});
+ console.log('Temporary product deleted; local order/customer/return audit records retained.');
+}
