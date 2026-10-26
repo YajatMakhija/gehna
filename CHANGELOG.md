@@ -2,6 +2,11 @@
 
 All notable changes to Gehna are documented in this file.
 
+## [0.1.2.0] - 2026-10-26
+
+- Refresh catalog changes when navigating, returning to the storefront, reconnecting, and every 30 seconds while the tab is visible.
+- Load the entire published catalog beyond the first 100 products and recover the cover photo when a selected gallery photo is removed.
+
 ## [0.1.1.1] - 2026-10-25
 
 - Keep product details and recommendations separated on mobile by using a fixed row gap instead of a percentage gap.
