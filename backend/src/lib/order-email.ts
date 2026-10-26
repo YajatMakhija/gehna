@@ -13,15 +13,21 @@ export function emailContent(order: any, kind: EmailKind) {
   const items = (order.items || []).map((item: any) => `<tr><td style="padding:16px 0;border-bottom:1px solid #eee5de"><strong>${escapeHtml(item.title)}</strong><br><span style="color:#756960;font-size:13px">Quantity: ${escapeHtml(item.quantity)}</span></td><td align="right" style="padding:16px 0;border-bottom:1px solid #eee5de;white-space:nowrap">${typeof item.total === 'number' ? escapeHtml(money(item.total)) : '—'}</td></tr>`).join('');
   const payment = cashOnDelivery(order) ? `Pay ${escapeHtml(money(order.total))} on delivery.` : `Order total: ${escapeHtml(money(order.total))}.`;
   const shipment = order.metadata?.gehna_shipment || {};
+  const awb = String(shipment.awb || '').trim();
+  let trackingUrl = 'https://www.shiprocket.in/shipment-tracking/';
+  try { const url = new URL(shipment.tracking_url); if (url.protocol === 'https:' && !url.username && !url.password) trackingUrl = url.href; } catch {}
+  const trackingText = awb
+    ? `Courier: ${shipment.courier_name || shipment.courier || 'Shiprocket'}. Shiprocket tracking ID (AWB): ${awb}.\nTrack your order: ${trackingUrl}`
+    : 'Your Shiprocket tracking ID will be emailed as soon as your courier is booked.';
   const subject = kind === 'order' ? `Gehna order #${order.display_id} confirmed` : `Gehna order #${order.display_id} is booked for delivery`;
   const heading = kind === 'order' ? 'Your order is confirmed.' : 'Your jewellery is booked for delivery.';
   const introduction = kind === 'order'
-    ? `Hi ${name}, thank you for choosing Gehna. We have received your order and will email you again when your courier is booked.`
+    ? `Hi ${name}, thank you for choosing Gehna. We have received your order.${awb ? ' Your delivery tracking details are below.' : ' We will email your Shiprocket tracking ID as soon as your courier is booked.'}`
     : `Hi ${name}, your order has been booked with ${escapeHtml(shipment.courier_name || shipment.courier)}. A booking does not mean the parcel has been collected yet.`;
   const address = order.shipping_address || {};
   const addressLines = [[address.first_name, address.last_name].filter(Boolean).join(' '), address.address_1, address.address_2, [address.city, address.province, address.postal_code].filter(Boolean).join(', '), address.phone].filter(Boolean).map(escapeHtml).join('<br>');
-  const tracking = kind === 'shipment' ? `<p style="padding:16px;background:#faf5ec;border-radius:8px">Tracking number (AWB): <strong>${escapeHtml(shipment.awb)}</strong></p>` : '';
-  const text = `Gehna\n${heading}\nOrder #${order.display_id}\n${kind === 'order' ? 'Thank you. We received your order.' : `Courier: ${shipment.courier_name || shipment.courier}. AWB: ${shipment.awb}. Pickup is not yet confirmed.`}\n${(order.items || []).map((item: any) => `${item.title} × ${item.quantity}`).join('\n')}\n${payment}\nView your orders: https://gehnadesigns.in/account/\nQuestions? Reply to this email.`;
+  const tracking = awb ? `<div style="padding:16px;background:#faf5ec;border-radius:8px"><p style="margin:0 0 8px">Courier: <strong>${escapeHtml(shipment.courier_name || shipment.courier || 'Shiprocket')}</strong><br>Shiprocket tracking ID (AWB): <strong>${escapeHtml(awb)}</strong></p><a href="${escapeHtml(trackingUrl)}" style="color:#80582d;font-weight:600">Track your order</a></div>` : '';
+  const text = `Gehna\n${heading}\nOrder #${order.display_id}\n${kind === 'order' ? 'Thank you. We received your order.' : 'Your courier is booked. Pickup is not yet confirmed.'}\n${trackingText}\n${(order.items || []).map((item: any) => `${item.title} × ${item.quantity}`).join('\n')}\n${payment}\nView your orders: https://gehnadesigns.in/account/\nQuestions? Reply to this email.`;
   return { subject, text, html: `<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#f7f3ef;font:15px/1.65 Arial,Helvetica,sans-serif;color:#292320">
 <div style="display:none;max-height:0;overflow:hidden">${escapeHtml(subject)}. ${payment}</div>
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:32px 12px"><table role="presentation" width="600" cellspacing="0" cellpadding="0" style="width:100%;max-width:600px;background:#ffffff;border:1px solid #eee5de;border-radius:12px">

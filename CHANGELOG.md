@@ -2,6 +2,11 @@
 
 All notable changes to Gehna are documented in this file.
 
+## [0.1.3.1] - 2026-10-26
+
+- Include the assigned Shiprocket tracking ID, courier and tracking link in order confirmations and courier-booking emails.
+- Explain that tracking follows after booking when no AWB exists yet, and fall back to Shiprocket’s public tracker for unsafe or missing tracking URLs.
+
 ## [0.1.3.0] - 2026-10-26
 
 - Add customer return requests for delivered items, with quantity selection, reasons and status in My orders.
