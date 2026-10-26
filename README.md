@@ -29,7 +29,7 @@ Official reference: [Shiprocket API documentation](https://apidocs.shiprocket.in
 
 ## Customer emails
 
-Order placement requests a confirmation email. A confirmed Shiprocket AWB requests a separate courier-booking email; booking does not claim the parcel has been collected. Failed requests are retried up to three times with a stable idempotency key. The dashboard shows each order's email status.
+Order placement requests a confirmation email. If a Shiprocket AWB is already assigned, it includes the courier, Shiprocket tracking ID (AWB) and a **Track your order** link. Otherwise it confirms promptly and explains that tracking will follow in the separate courier-booking email, which includes the tracking details and link once the AWB is assigned. Links use the provider’s HTTPS tracking URL without embedded credentials, or fall back to Shiprocket’s public shipment-tracking page. Booking does not claim the parcel has been collected. Failed requests are retried up to three times with a stable idempotency key. The dashboard shows each order's email status.
 
 Verify `gehnadesigns.in` as a sender domain in [Resend](https://resend.com/domains), add its DNS records, create an API key, and set `RESEND_API_KEY` and `ORDER_EMAIL_FROM=Gehna <rajesh@gehnadesigns.in>` on the backend only. Restart it and test with an inbox you own. Without these settings no email is sent. [Resend's Send Email API](https://resend.com/docs/api-reference/emails/send-email) documents the sender, recipient, HTML and idempotency key used here.
 
