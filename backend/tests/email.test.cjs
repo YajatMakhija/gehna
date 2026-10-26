@@ -30,6 +30,9 @@ test('confirmation and booking emails link assigned tracking safely and explain 
     assert(content.html.includes('href="https://track.example.test/parcel?awb=AWB123456&amp;source=email"'));
     assert(content.text.includes('https://track.example.test/parcel?awb=AWB123456&source=email'));
     assert(content.html.includes('Delhivery'));
+    assert(content.html.includes('How to track'));
+    assert(content.text.includes('1. Open the tracking link above.'));
+    assert(content.text.includes('2. If prompted, enter AWB123456 as the tracking number and select Track.'));
     assert(!content.html.includes('will email your Shiprocket tracking ID'));
   }
   for (const tracking_url of ['javascript:alert(1)', 'http://track.example.test/', 'not a URL', 'https://user:password@track.example.test/']) {

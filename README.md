@@ -25,11 +25,15 @@ Medusa is a custom store, so use Shiprocket's API integration, not its Shopify/W
 5. After this succeeds, set `AUTO_SHIP=true` and restart. New eligible COD orders are booked after checkout. A recovery job checks missed/retryable orders every five minutes. If an API timeout leaves an uncertain remote booking, use **Sync from Shiprocket** in the dashboard; do not create a duplicate. Set `SHIPROCKET_AUTO_PICKUP=true` only when you are ready to request pickup automatically.
 6. Use the dashboard to view customer/address/items/AWB, view or download labels, select up to 100 orders for bulk customer CSV or native labels PDF, request/verify pickup, and refresh tracking. Monitor charges, COD remittance, cancellations and RTO in Shiprocket. Mark COD captured in Medusa only after cash is actually received/reconciled.
 
+Keep the Shiprocket wallet funded for the quoted courier charge. A live AWB assignment check was rejected because the wallet was below Shiprocket’s stated ₹100 minimum; ₹100 does not necessarily cover a shipment. The dashboard now shows the provider’s wallet rejection explicitly and keeps uncertain bookings on hold. After funding the wallet, verify the existing shipment in Shiprocket and use **Sync from Shiprocket** to reconcile it before retrying; do not create a duplicate booking. A successful real AWB, label and pickup check is still required.
+
 Official reference: [Shiprocket API documentation](https://apidocs.shiprocket.in/) (Authentication, Create Custom Order, Courier Serviceability, Assign AWB, Labels, Pickup and Tracking). COD orders send `payment_method: "COD"` and the serviceability request uses `cod=1`.
 
 ## Customer emails
 
 Order placement requests a confirmation email. If a Shiprocket AWB is already assigned, it includes the courier, Shiprocket tracking ID (AWB) and a **Track your order** link. Otherwise it confirms promptly and explains that tracking will follow in the separate courier-booking email, which includes the tracking details and link once the AWB is assigned. Links use the provider’s HTTPS tracking URL without embedded credentials, or fall back to Shiprocket’s public shipment-tracking page. Booking does not claim the parcel has been collected. Failed requests are retried up to three times with a stable idempotency key. The dashboard shows each order's email status.
+
+To track a shipment, open **Track your order** in the email. If prompted, enter the email’s Shiprocket tracking ID (AWB) as the tracking number and select **Track**.
 
 Verify `gehnadesigns.in` as a sender domain in [Resend](https://resend.com/domains), add its DNS records, create an API key, and set `RESEND_API_KEY` and `ORDER_EMAIL_FROM=Gehna <rajesh@gehnadesigns.in>` on the backend only. Restart it and test with an inbox you own. Without these settings no email is sent. [Resend's Send Email API](https://resend.com/docs/api-reference/emails/send-email) documents the sender, recipient, HTML and idempotency key used here.
 

@@ -79,6 +79,8 @@ export async function createRemoteOrder(order: any) {
 export async function assignAwb(shipmentId: number, courierId: number) {
   const data = await shiprocket('courier/assign/awb', { shipment_id: shipmentId, courier_id: courierId }, true);
   const result = data.response?.data;
+  const rejection = result?.awb_assign_error || data.message;
+  if (data.awb_assign_status !== 1 && typeof rejection === 'string' && rejection.trim()) throw new CourierError('Shiprocket AWB assignment failed: ' + rejection.replace(/\s+/g, ' ').trim().slice(0, 300), true);
   if (data.awb_assign_status !== 1 || !/^[a-zA-Z0-9-]{6,40}$/.test(result?.awb_code || '') || Number(result.shipment_id) !== shipmentId || Number(result.courier_company_id) !== courierId) throw new CourierError('No matching AWB confirmation was returned. Sync the shipment from Shiprocket.', true);
   return { awb: String(result.awb_code), courier_name: String(result.courier_name || '') };
 }

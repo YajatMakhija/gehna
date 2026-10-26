@@ -17,7 +17,7 @@ export function emailContent(order: any, kind: EmailKind) {
   let trackingUrl = 'https://www.shiprocket.in/shipment-tracking/';
   try { const url = new URL(shipment.tracking_url); if (url.protocol === 'https:' && !url.username && !url.password) trackingUrl = url.href; } catch {}
   const trackingText = awb
-    ? `Courier: ${shipment.courier_name || shipment.courier || 'Shiprocket'}. Shiprocket tracking ID (AWB): ${awb}.\nTrack your order: ${trackingUrl}`
+    ? `Courier: ${shipment.courier_name || shipment.courier || 'Shiprocket'}. Shiprocket tracking ID (AWB): ${awb}.\nTrack your order: ${trackingUrl}\nHow to track:\n1. Open the tracking link above.\n2. If prompted, enter ${awb} as the tracking number and select Track.`
     : 'Your Shiprocket tracking ID will be emailed as soon as your courier is booked.';
   const subject = kind === 'order' ? `Gehna order #${order.display_id} confirmed` : `Gehna order #${order.display_id} is booked for delivery`;
   const heading = kind === 'order' ? 'Your order is confirmed.' : 'Your jewellery is booked for delivery.';
@@ -26,7 +26,7 @@ export function emailContent(order: any, kind: EmailKind) {
     : `Hi ${name}, your order has been booked with ${escapeHtml(shipment.courier_name || shipment.courier)}. A booking does not mean the parcel has been collected yet.`;
   const address = order.shipping_address || {};
   const addressLines = [[address.first_name, address.last_name].filter(Boolean).join(' '), address.address_1, address.address_2, [address.city, address.province, address.postal_code].filter(Boolean).join(', '), address.phone].filter(Boolean).map(escapeHtml).join('<br>');
-  const tracking = awb ? `<div style="padding:16px;background:#faf5ec;border-radius:8px"><p style="margin:0 0 8px">Courier: <strong>${escapeHtml(shipment.courier_name || shipment.courier || 'Shiprocket')}</strong><br>Shiprocket tracking ID (AWB): <strong>${escapeHtml(awb)}</strong></p><a href="${escapeHtml(trackingUrl)}" style="color:#80582d;font-weight:600">Track your order</a></div>` : '';
+  const tracking = awb ? `<div style="padding:16px;background:#faf5ec;border-radius:8px"><p style="margin:0 0 8px">Courier: <strong>${escapeHtml(shipment.courier_name || shipment.courier || 'Shiprocket')}</strong><br>Shiprocket tracking ID (AWB): <strong>${escapeHtml(awb)}</strong></p><a href="${escapeHtml(trackingUrl)}" style="color:#80582d;font-weight:600">Track your order</a><p style="margin:16px 0 4px;font-weight:600">How to track</p><ol style="margin:0;padding-left:20px;font-size:13px"><li>Open the tracking link above.</li><li>If prompted, enter <strong>${escapeHtml(awb)}</strong> as the tracking number and select Track.</li></ol></div>` : '';
   const text = `Gehna\n${heading}\nOrder #${order.display_id}\n${kind === 'order' ? 'Thank you. We received your order.' : 'Your courier is booked. Pickup is not yet confirmed.'}\n${trackingText}\n${(order.items || []).map((item: any) => `${item.title} × ${item.quantity}`).join('\n')}\n${payment}\nView your orders: https://gehnadesigns.in/account/\nQuestions? Reply to this email.`;
   return { subject, text, html: `<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#f7f3ef;font:15px/1.65 Arial,Helvetica,sans-serif;color:#292320">
 <div style="display:none;max-height:0;overflow:hidden">${escapeHtml(subject)}. ${payment}</div>

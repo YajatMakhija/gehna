@@ -2,6 +2,11 @@
 
 All notable changes to Gehna are documented in this file.
 
+## [0.1.3.2] - 2026-10-26
+
+- Add step-by-step tracking instructions to customer emails when an AWB is available.
+- Show Shiprocket’s AWB rejection reason, including wallet funding errors, while preserving duplicate-booking protection.
+
 ## [0.1.3.1] - 2026-10-26
 
 - Include the assigned Shiprocket tracking ID, courier and tracking link in order confirmations and courier-booking emails.
