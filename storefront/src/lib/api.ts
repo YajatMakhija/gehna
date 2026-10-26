@@ -15,3 +15,11 @@ export function mapProduct(p: any): Product {
   const image = images[0] || '/images/jhumkas.png';
   return { id: p.id, createdAt: p.created_at, handle: p.handle, title: p.title, subtitle: p.subtitle || '', description: p.description || '', category: p.categories?.[0]?.name || p.type?.value || inferred, image, images: images.length ? images : [image], price: v?.price || 0, variantId: v?.id || '', stock: v?.stock ?? 0, options: variants.map((v: any) => v.title), variants };
 }
+export async function loadCatalog(region: string): Promise<Product[]> {
+  const products: any[] = [];
+  while (true) {
+    const result = await api(`/store/products?region_id=${region}&fields=id,title,subtitle,description,handle,thumbnail,*images,created_at,*variants,*variants.calculated_price,variants.inventory_quantity,*categories&limit=100&offset=${products.length}`);
+    products.push(...result.products);
+    if (!result.products.length || products.length >= result.count) return products.map(mapProduct);
+  }
+}

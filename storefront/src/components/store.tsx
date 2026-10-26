@@ -4,12 +4,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Search, UserRound, ShoppingBag, Heart, X, Minus, Plus, ArrowRight, Menu, ChevronDown, Check, LoaderCircle } from 'lucide-react';
 import { Product, sampleProducts, demoMode, money, adminUrl, sampleCatalog } from '@/lib/catalog';
-import { api, mapProduct } from '@/lib/api';
+import { api, loadCatalog } from '@/lib/api';
 export type BagItem = { id: string; product: Product; quantity: number; variantId: string };
 type StoreState = { products: Product[]; loading: boolean; catalogError: string; bag: BagItem[]; cart: any; region: string; isDemo: boolean; wishlist: string[]; toggleWish: (id: string) => void; add: (product: Product, variantId?: string) => Promise<void>; update: (id: string, quantity: number) => Promise<void>; refreshCart: () => Promise<any>; clearCart: () => void; openBag: boolean; setOpenBag: (open: boolean) => void; notice: string; notify: (text: string) => void; busy: boolean };
 const Context = createContext<StoreState | null>(null);
 export const useStore = () => { const store = useContext(Context); if (!store) throw new Error('Missing store provider'); return store; };
 export function StoreProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
   const [products, setProducts] = useState<Product[]>(demoMode ? sampleProducts : []);
   const [loading, setLoading] = useState(!demoMode); const [catalogError, setCatalogError] = useState('');
   const [bag, setBag] = useState<BagItem[]>([]); const [cart, setCart] = useState<any>(null); const [region, setRegion] = useState('');
@@ -18,10 +19,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => { try { setWishlist(JSON.parse(localStorage.getItem('gehna-wishlist') || '[]')); if (demoMode) setBag(JSON.parse(localStorage.getItem('gehna-demo-bag') || '[]')); } catch { /* Empty storage is safe. */ }
     if (demoMode) return;
     (async () => { try { const { regions } = await api('/store/regions'); const r = regions.find((r: any) => r.id === process.env.NEXT_PUBLIC_MEDUSA_REGION_ID) || regions.find((r: any) => r.currency_code === 'inr'); if (!r) throw new Error('The India store is not configured yet.'); setRegion(r.id);
-      const result = await api(`/store/products?region_id=${r.id}&fields=id,title,subtitle,description,handle,thumbnail,*images,created_at,*variants,*variants.calculated_price,variants.inventory_quantity,*categories&limit=100`); setProducts(result.products.map(mapProduct));
       const id = localStorage.getItem('gehna-cart'); if(id) { try { const result = await api(`/store/carts/${id}`); if (result.cart.completed_at) localStorage.removeItem('gehna-cart'); else setCart(result.cart); } catch { localStorage.removeItem('gehna-cart'); } }
-    } catch (error) { setCatalogError((error as Error).message); } finally { setLoading(false); } })();
+    } catch (error) { setCatalogError((error as Error).message); setLoading(false); } })();
   }, []);
+  useEffect(() => {
+    if (demoMode || !region) return;
+    let active = true, pending = false;
+    const refresh = async () => {
+      if (document.hidden || pending) return;
+      pending = true;
+      try { const products = await loadCatalog(region); if (active) { setProducts(products); setCatalogError(''); } }
+      catch (error) { if (active) setCatalogError((error as Error).message); }
+      finally { pending = false; if (active) setLoading(false); }
+    };
+    void refresh();
+    const timer = window.setInterval(refresh, 30000);
+    window.addEventListener('focus', refresh);
+    window.addEventListener('online', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => { active = false; window.clearInterval(timer); window.removeEventListener('focus', refresh); window.removeEventListener('online', refresh); document.removeEventListener('visibilitychange', refresh); };
+  }, [pathname, region]);
   useEffect(() => { if (!cart) return; setBag((cart.items || []).map((i: any) => ({ id: i.id, quantity: i.quantity, variantId: i.variant_id, product: products.find(p => p.id === i.product_id) ? {...products.find(p => p.id === i.product_id)!, price: i.unit_price} : { id: i.product_id, handle: i.product_handle, title: i.product_title || i.title, subtitle: i.variant_title, description: '', category: '', image: i.thumbnail, images: i.thumbnail ? [i.thumbnail] : [], price: i.unit_price, variantId: i.variant_id, stock: 999, options: [] } }))); }, [cart, products]);
   useEffect(() => { if(!notice) return; const t = setTimeout(() => notify(''), 4200); return () => clearTimeout(t); }, [notice]);
   function toggleWish(id: string) { setWishlist(prev => { const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]; localStorage.setItem('gehna-wishlist', JSON.stringify(next)); return next; }); }
