@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { ArrowRight, ArrowUpRight, Heart, SlidersHorizontal, Search, Minus, Plus, Check, ChevronDown, ShoppingBag, Flower2 } from 'lucide-react';
 import { useStore, ProductCard, CatalogState } from './store';
 import { money, sampleCatalog } from '@/lib/catalog';
+import { ProductReviews } from './product-reviews';
 export { Account } from './account';
 export { Checkout, OrderConfirmation } from './checkout';
 export { Home } from './home';
@@ -29,6 +30,7 @@ export function ProductPage() {
       </div>
       <div className="detail-copy"><p className="product-category">{product.category}</p><h1>{product.title}</h1><p className="product-subtitle">{product.subtitle}</p><div className="detail-price">{money(variant?.price ?? product.price)}</div><p className="tax-note">Final taxes and shipping shown at checkout.</p><p className="description">{product.description}</p>{product.variants && product.variants.length > 1 && <label className="field">Choose an option<select value={selected || product.variants[0].id} onChange={e => setSelected(e.target.value)}>{product.variants.map(v => <option value={v.id} key={v.id}>{v.title}</option>)}</select></label>}<div className="detail-actions"><button className="button" disabled={busy || (variant?.stock ?? product.stock) < 1} onClick={() => add({ ...product, price: variant?.price ?? product.price }, variant?.id ?? product.variantId)}>{busy ? 'Adding…' : (variant?.stock ?? product.stock) < 1 ? 'Out of stock' : 'Add to bag'}<ShoppingBag size={18} /></button><button className={`detail-wish ${wishlist.includes(product.id) ? 'saved' : ''}`} aria-label="Save to wishlist" onClick={() => toggleWish(product.id)}><Heart fill={wishlist.includes(product.id) ? 'currentColor' : 'none'} size={21} /></button></div><p className="stock-note">{(variant?.stock ?? product.stock) > 0 ? 'Available to add to your collection' : 'This piece is currently unavailable'}</p><details open><summary>About this piece <ChevronDown size={16} /></summary><p>{sampleCatalog ? "Explore the sample design in the photograph. Material, dimensions and care specifications will be confirmed with the final product catalog." : product.description}</p></details><details><summary>Care for your jewellery <ChevronDown size={16} /></summary><p>Store separately in a dry, soft pouch. Keep away from perfume and water, and gently wipe after wearing. Follow the material-specific instructions supplied with your piece.</p></details><details><summary>Shipping & returns <ChevronDown size={16} /></summary><p>Shipping availability and charges appear at checkout. The final returns policy will be published before the store opens for orders.</p></details></div>
     </div>
+    <ProductReviews key={product.id} productId={product.id} handle={product.handle} />
     <section className="related"><div className="section-heading"><h2>A little more to <em>love.</em></h2><Link className="text-link" href="/shop">View collection <ArrowRight size={16} /></Link></div><div className="shop-grid">{products.filter(p => p.id !== product.id).map(p => <ProductCard key={p.id} product={p} />)}</div></section>
   </main>;
 }
