@@ -1,9 +1,12 @@
 import { backendUrl, publishableKey, Product } from './catalog';
+export class ApiError extends Error {
+  constructor(message: string, public status: number) { super(message); }
+}
 export async function api(path: string, method = 'GET', body?: unknown, token?: string) {
   token = token || (typeof window !== 'undefined' ? sessionStorage.getItem('gehna-token') || undefined : undefined);
   const res = await fetch(`${backendUrl}${path}`, { method, headers: { 'Content-Type': 'application/json', 'x-publishable-api-key': publishableKey, ...(token ? { Authorization: `Bearer ${token}` } : {}) }, ...(body !== undefined ? { body: JSON.stringify(body) } : {}), cache: 'no-store' });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.message || `The store could not complete this request (${res.status}). Please try again.`);
+  if (!res.ok) throw new ApiError(data.message || `The store could not complete this request (${res.status}). Please try again.`, res.status);
   return data;
 }
 export function mapProduct(p: any): Product {

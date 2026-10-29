@@ -27,5 +27,5 @@ module.exports = defineConfig({
     backendUrl: process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
     vite: () => ({ server: { allowedHosts: ["localhost", "127.0.0.1", ".up.railway.app", "api.gehnadesigns.in"] } })
   },
-  modules: [...redisModules, ...fileModules]
+  modules: [...redisModules, ...fileModules, { resolve: './src/modules/reviews' }]
 });

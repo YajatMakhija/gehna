@@ -2,6 +2,14 @@
 
 All notable changes to Gehna are documented in this file.
 
+## [0.1.4.0] - 2026-10-29
+
+- Add persistent customer star ratings and written reviews for delivered purchases, including editing, public averages and pagination without exposing customer emails.
+- Add a responsive review section to product pages, with a sign-in link that returns customers to their chosen piece.
+- Preserve email casing during sign-in and keep valid sessions when order or address loading fails.
+- Retry bag attachment before checkout and require the completed cart to belong to the signed-in customer.
+- Extend the local checkout and returns check to cover review creation, editing, eligibility and customer isolation.
+
 ## [0.1.3.2] - 2026-10-26
 
 - Add step-by-step tracking instructions to customer emails when an AWB is available.

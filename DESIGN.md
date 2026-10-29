@@ -124,6 +124,8 @@ The centered content wrapper caps at 1320px with total horizontal inset of 88px 
 
 Two category cards form a paired row. Featured products form two columns with a 24px gap; the shop grid is three columns on desktop and two on mobile. The story band is two equal image/text columns on desktop and stacks image before text on mobile. Category photos crop to 370px desktop, 310px below 1100px, and 185px mobile. Product photos use a .9 aspect ratio desktop and .8 mobile.
 
+Product reviews place the reading list beside a light-blush writing panel, with the list slightly wider. Below 760px, the list precedes the writing panel in a single column.
+
 **The Mobile Flow Rule.** Preserve the sequence image, message, category choice, products, and story; avoid shrinking the desktop hero composition onto a phone.
 
 ## Elevation & Depth
@@ -153,6 +155,12 @@ Inputs use white fill, a soft border, and 10px corners; focus shifts the border 
 ### Photography and catalog truth
 
 The hero, category, and story images are illustrative campaign imagery; they are not verified photos of the products for sale. Product cards render each product record's image and price. Those records are sourced from Medusa when configured, or from the explicitly disclosed illustrative sample catalog in preview mode. The current sample catalog still contains an ornate jhumka image, which remains because the product card must show the actual image tied to that sample SKU. Do not replace a product photo with a visually convenient campaign image or imply the sample products, prices, materials, or stock are verified.
+
+### Ratings and reviews
+
+Product-detail reviews inherit Nunito Sans, ink reading text, berry stars, quiet dividers, and the existing pill action. The writing panel uses light blush and gently curved corners (14px); its white textarea uses the field shape and a visible berry focus outline. Native radio inputs retain keyboard selection behind star labels with generous touch targets (44px square).
+
+Keep loading, empty, guest, purchase-eligibility, validation, saving, and success states visible in text. Guests receive a sign-in action; signed-in customers can write after delivery and update their single review for that customer and product. Public entries show first name, stars, review body, month/year, and verified-purchase text. The account email stays private. Preserve these eligibility and privacy cues when changing the layout.
 
 ## Do's and Don'ts
 
