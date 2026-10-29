@@ -1,10 +1,12 @@
-# Gehna deployment QA — updated 26 October 2026
+# Gehna deployment QA — updated 29 October 2026
 
 ## Verified locally
 
+- The review release passed all 21 backend test groups, both TypeScript checks and both production builds. The local checkout-to-delivery flow passed review eligibility, creation, editing, public averages and customer isolation, followed by staff return receipt with exact restock.
+- Local browser checks passed registration, mixed-case email login, logout, product reviews and customer return forms. Independent source and visual reviews passed. Deployment of the review release and authenticated production review API checks remain pending merge. These checks do not establish production readiness or verify a real courier booking, pickup or refund.
 - Catalog studio and the light dashboard were checked at mobile, tablet and desktop widths. The image shortcut opens Medusa’s media editor.
 - Multi-image upload, saved gallery reordering and cover-photo changes passed through the admin and Store APIs. Product-gallery thumbnail switching and the Earrings collection passed browser checks. Temporary products and uploads were removed.
-- 13 backend/catalog test groups passed; both TypeScript checks and production builds passed.
+- The earlier catalog release passed 13 backend/catalog test groups, both TypeScript checks and production builds.
 - 108 commerce requests across 54 endpoint/method combinations passed. Expected error responses below are intentional validation/authentication checks.
 - Product create, image upload and byte-exact download, price and stock updates, storefront sync and deletion passed.
 - Signup, login, profile, saved addresses, order history, cart, stock protection, delivery, COD completion without OTP, dashboard reporting and CSV export passed.
