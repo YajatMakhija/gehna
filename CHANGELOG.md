@@ -2,6 +2,13 @@
 
 All notable changes to Gehna are documented in this file.
 
+## [0.1.4.1] - 2026-10-31
+
+- Show the two-day return policy on every product page and in shipping/return help.
+- Enforce a 48-hour customer return request window from recorded delivery, with the deadline and expired state in My orders.
+- Keep timely return requests available for staff processing after the customer window closes.
+- Test cutoff boundaries, delivery timestamps, return ownership, receipt and inventory restoration.
+
 ## [0.1.4.0] - 2026-10-29
 
 - Add persistent customer star ratings and written reviews for delivered purchases, including editing, public averages and pagination without exposing customer emails.

@@ -1,13 +1,14 @@
 import type { AuthenticatedMedusaRequest, MedusaResponse } from '@medusajs/framework/http';
 import { Modules } from '@medusajs/framework/utils';
-import { customerOrder, customerReturn, orderReturns, returnableQuantity, validateReturn } from '../../../../lib/returns';
+import { customerOrder, customerReturn, orderReturns, returnableQuantity, returnWindow, validateReturn } from '../../../../lib/returns';
 import { customerReturnWorkflow } from '../../../../workflows/customer-return';
 
 export async function GET(req: AuthenticatedMedusaRequest, res: MedusaResponse) {
   res.setHeader('Cache-Control', 'no-store');
   const order = await customerOrder(req.scope, req.auth_context.actor_id, req.query.order_id);
   const returns = await orderReturns(req.scope, order.id);
-  res.json({ returns: returns.map(customerReturn), eligible_items: order.status === 'canceled' ? [] : order.items.map((i: any) => ({ id: i.id, title: i.title, quantity: returnableQuantity(i) })).filter((i: any) => i.quantity > 0) });
+  const window = returnWindow(order);
+  res.json({ returns: returns.map(customerReturn), return_deadline: window.expires_at, return_window_expired: window.expired, eligible_items: !window.open ? [] : order.items.map((i: any) => ({ id: i.id, title: i.title, quantity: returnableQuantity(i) })).filter((i: any) => i.quantity > 0) });
 }
 export async function POST(req: AuthenticatedMedusaRequest, res: MedusaResponse) {
   res.setHeader('Cache-Control', 'no-store');
