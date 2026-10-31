@@ -40,6 +40,9 @@ try{
  await api(`/admin/orders/${orderId}/fulfillments/${fulfillment}/shipments`,{token:admin,body:{items:[{id:itemId,quantity:1}],labels:[],no_notification:true}});
  await api(`/admin/orders/${orderId}/fulfillments/${fulfillment}/mark-as-delivered`,{token:admin,body:{no_notification:true}});
  const available=await api('/store/gehna/returns?order_id='+orderId,{token});assert.equal(available.eligible_items[0].quantity,1);
+ const deliveredOrder=(await api('/admin/orders/'+orderId+'?fields=*fulfillments',{token:admin})).order;
+ assert.equal(Date.parse(available.return_deadline)-Date.parse(deliveredOrder.fulfillments.find(f=>f.id===fulfillment).delivered_at),48*60*60*1000);
+ assert.equal(available.return_window_expired,false);
  assert.equal((await api('/store/gehna/reviews/me?product_id='+productId,{token})).eligible,true);
  await api('/store/gehna/reviews',{token,body:{...reviewInput,rating:6},status:400});
  const written=(await api('/store/gehna/reviews',{token,body:reviewInput})).review;
